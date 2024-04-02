@@ -1,0 +1,62 @@
+name: Deploy con Serverless Framework
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: "Set Go version"
+        default: 1.22
+        type: string
+      sam-version:
+        description: "SAM version"
+        default: 1.23.0
+        type: string
+  
+jobs:
+  prepare:
+    runs-on: 
+      group: qa
+    outputs:
+      branch: ${{ (startsWith(github.ref, 'refs/tags/') || github.ref_name == 'main') && 'prod' || (github.ref_name == 'qa' ) && 'qa' || 'qa' }}
+    steps:
+      - run: echo "Exposing branch"
+  serverless:
+    needs: prepare
+    runs-on:
+      group: ${{ needs.prepare.outputs.branch }}
+    environment:
+      name: ${{ needs.prepare.outputs.branch }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ inputs.go-version }}
+      - uses: aws-actions/setup-sam@v1
+        with:
+          version: ${{ inputs.sam-version }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Export secret as env
+        if: ${{ env.secret != 'null' }}
+        run: echo "$secret" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+        env: 
+          secret: ${{ toJson(secrets) }}
+      - name: Export vars as env
+        if: ${{ env.var != 'null' }}
+        env:
+          var: ${{ toJson(vars) }}
+        run: echo "$var" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+      - name: Install dependencies
+        run: npm install
+      - name: Run build GO
+        run: make build
+      - name: Serverless deploy
+        run: sam build --use-container
+        run: sam package --template-file template.yaml --output-template-file output.yaml
+        run: sam deploy --template-file output.yaml
