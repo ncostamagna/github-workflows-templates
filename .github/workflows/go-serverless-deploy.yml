@@ -57,6 +57,7 @@ jobs:
       - name: Run build GO
         run: make build
       - name: Serverless deploy
-        run: sam build --use-container
-        run: sam package --template-file template.yaml --output-template-file output.yaml
-        run: sam deploy --template-file output.yaml
+        run: |
+          sam build --use-container
+          sam package --template-file template.yaml --output-template-file output.yaml
+          sam deploy --template-file output.yaml
