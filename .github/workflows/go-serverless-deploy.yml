@@ -14,16 +14,14 @@ on:
   
 jobs:
   prepare:
-    runs-on: 
-      group: qa
+    runs-on: ubuntu-latest
     outputs:
       branch: ${{ (startsWith(github.ref, 'refs/tags/') || github.ref_name == 'main') && 'prod' || (github.ref_name == 'qa' ) && 'qa' || 'qa' }}
     steps:
       - run: echo "Exposing branch"
   serverless:
     needs: prepare
-    runs-on:
-      group: ${{ needs.prepare.outputs.branch }}
+    runs-on: ubuntu-latest
     environment:
       name: ${{ needs.prepare.outputs.branch }}
     steps:
