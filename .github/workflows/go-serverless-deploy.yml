@@ -37,8 +37,6 @@ jobs:
         with:
           use-installer: true
           version: ${{ inputs.sam-version }}
-      - name: Install dependencies
-        run: npm install
       - name: Run build GO
         run: make build
       - name: Export secret as env
