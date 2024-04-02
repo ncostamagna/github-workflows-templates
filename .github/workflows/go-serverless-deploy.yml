@@ -12,12 +12,6 @@ on:
         default: 1.23.0
         type: string
 
-permissions:
-  packages: write
-  id-token: write # This is required for requesting the JWT
-  contents: read  # This is required for actions/checkout
-  issues: write
-
 jobs:
   prepare:
     runs-on: ubuntu-latest
