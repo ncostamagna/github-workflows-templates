@@ -37,8 +37,6 @@ jobs:
         with:
           use-installer: true
           version: ${{ inputs.sam-version }}
-      - name: Run build GO
-        run: make build
       - name: Export secret as env
         if: ${{ env.secret != 'null' }}
         run: echo "$secret" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
