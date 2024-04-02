@@ -32,6 +32,7 @@ jobs:
         with:
           go-version: ${{ inputs.go-version }}
       - uses: actions/setup-python@v2
+      - run: pip install wheel setuptools pip --upgrade
       - uses: aws-actions/setup-sam@v1
         with:
           version: ${{ inputs.sam-version }}
