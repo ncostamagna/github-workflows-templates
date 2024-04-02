@@ -36,7 +36,7 @@ jobs:
       - name: Test
         id: run_test
         if: ${{ inputs.test }}
-        run: go test -v ./... -coverprofile=coverage.out
+        run: go test ./internal/... ./pkg/... -covermode=atomic -coverpkg=./... -count=1 -race -v
       - name: Linter
         if: ${{ inputs.lint }}
         uses: golangci/golangci-lint-action@v3
