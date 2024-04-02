@@ -31,6 +31,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ inputs.go-version }}
+      - uses: actions/setup-python@v2
       - uses: aws-actions/setup-sam@v1
         with:
           version: ${{ inputs.sam-version }}
