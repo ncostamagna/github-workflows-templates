@@ -26,6 +26,7 @@ jobs:
       name: ${{ needs.prepare.outputs.branch }}
     steps:
       - run: echo ${{ github.ref_name }}
+      - run: echo ${{ needs.prepare.outputs.branch }}
       - uses: actions/checkout@v4
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
