@@ -1,0 +1,44 @@
+name: Run go test
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: "Set Go version"
+        default: 1.22
+        type: string
+      lint-version:
+        description: "Set Lint go version"
+        default: v1.54.2
+        type: string
+      test:
+        description: "Enable Go test"
+        default: true
+        type: boolean
+      lint:
+        description: "Execute script lint"
+        default: true
+        type: boolean
+
+jobs:
+  script-go-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 
+      - name: Install
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ inputs.go-version }}
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        id: run_test
+        if: ${{ inputs.test }}
+        run: go test -v ./... -coverprofile=coverage.out
+      - name: Linter
+        if: ${{ inputs.lint }}
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: ${{ inputs.lint-version }}
