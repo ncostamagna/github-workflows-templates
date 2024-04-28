@@ -43,5 +43,4 @@ jobs:
           var: ${{ toJson(vars) }}
         run: echo "$var" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV 
       - run: npm ci
-      - run: npm publish ts-responses@1.0.10
-
+      - run: npm publish --tag next
