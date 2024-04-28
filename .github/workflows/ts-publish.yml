@@ -16,7 +16,7 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-        branch: ${{ (startsWith(github.ref, 'refs/tags/') && github.ref_name == 'main') && 'prod' || (github.ref_name == 'qa' || github.ref_name == 'staging') && 'qa' || 'qa' }}
+        branch: ${{ (startsWith(github.ref, 'refs/tags/') || github.ref_name == 'main') && 'prod' || (github.ref_name == 'qa' || github.ref_name == 'staging') && 'qa' || 'qa' }}
     steps:
         - run: echo "Exposing branch"
   publish:
