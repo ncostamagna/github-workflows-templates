@@ -46,3 +46,5 @@ jobs:
       - run: npm config set git-tag-version=false 
       - run: npm version 1.0.9
       - run: npm publish
+        env:
+            NODE_AUTH_TOKEN: ${{ secrets.NODE_NPM_TOKEN }}
