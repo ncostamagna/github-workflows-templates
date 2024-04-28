@@ -16,7 +16,7 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-        branch: ${{ (startsWith(github.ref, 'refs/tags/') || github.ref_name == 'main') && 'prod' || (github.ref_name == 'qa' || github.ref_name == 'staging') && 'qa' || 'qa' }}
+        branch: ${{ (startsWith(github.ref, 'refs/tags/') && github.ref_name == 'main') && 'prod' || (github.ref_name == 'qa' || github.ref_name == 'staging') && 'qa' || 'qa' }}
     steps:
         - run: echo "Exposing branch"
   publish:
@@ -45,7 +45,7 @@ jobs:
         run: echo "$var" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV 
       - run: npm ci
       - run: npm config set git-tag-version=false 
-      - run: npm version 1.0.9
+      - run: npm version ${{  github.ref_name }}
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_NPM_TOKEN }}
