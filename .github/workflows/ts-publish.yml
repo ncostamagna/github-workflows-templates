@@ -1,0 +1,48 @@
+name: TypeScript Wares SDK template
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: "Set the node version"
+        default: '20.x'
+        type: string
+      registry-url:
+        description: "Set the registry-url"
+        default: 'https://registry.npmjs.org'
+        type: string
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+        branch: ${{ (startsWith(github.ref, 'refs/tags/') || github.ref_name == 'main') && 'prod' || (github.ref_name == 'qa' || github.ref_name == 'staging') && 'qa' || 'qa' }}
+    steps:
+        - run: echo "Exposing branch"
+  publish:
+    needs: prepare
+    runs-on: ubuntu-latest
+    environment:
+      name : ${{ needs.prepare.outputs.branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+           node-version: '20.x'
+           registry-url: 'https://registry.npmjs.org'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_NPM_TOKEN }}
+      - name: Export secret as env
+        if: ${{ env.secret != 'null' }}
+        run: echo "$secret" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+        env:
+          secret: ${{ toJson(secrets) }}
+      - name: Export vars as env
+        if: ${{ env.var != 'null' }}
+        env:
+          var: ${{ toJson(vars) }}
+        run: echo "$var" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV 
+      - run: npm ci
+      - run: npm publish

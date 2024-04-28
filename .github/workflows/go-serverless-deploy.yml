@@ -14,34 +14,41 @@ on:
   
 jobs:
   prepare:
-    runs-on: 
-      group: qa
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     outputs:
       branch: ${{ (startsWith(github.ref, 'refs/tags/') || github.ref_name == 'main') && 'prod' || (github.ref_name == 'qa' ) && 'qa' || 'qa' }}
     steps:
       - run: echo "Exposing branch"
   serverless:
     needs: prepare
-    runs-on:
-      group: ${{ needs.prepare.outputs.branch }}
+    runs-on: ubuntu-latest
     environment:
       name: ${{ needs.prepare.outputs.branch }}
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read  # This is required for actions/checkout
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-go@v4
-        with:
-          go-version: ${{ inputs.go-version }}
-      - uses: aws-actions/setup-sam@v1
-        with:
-          version: ${{ inputs.sam-version }}
+      - run: echo ${{ github.ref_name }}
+      - run: echo ${{ needs.prepare.outputs.branch }}
+      - uses: actions/checkout@v4
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@master
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ inputs.go-version }}
+      #- uses: actions/setup-python@v2
+      #- run: pip install wheel setuptools pip --upgrade
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+          version: ${{ inputs.sam-version }}
       - name: Export secret as env
         if: ${{ env.secret != 'null' }}
         run: echo "$secret" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
@@ -52,10 +59,6 @@ jobs:
         env:
           var: ${{ toJson(vars) }}
         run: echo "$var" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
-      - name: Install dependencies
-        run: npm install
-      - name: Run build GO
-        run: make build
       - name: Serverless deploy
         run: |
           sam build --use-container
