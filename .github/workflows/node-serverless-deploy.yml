@@ -10,6 +10,8 @@ on:
     secrets:
       AWS_ACCESS_KEY_ID: { required: true }
       AWS_SECRET_ACCESS_KEY: { required: true }
+      DATABASE_URL: { required: false }
+      SENTRY_DSN: { required: false }
 
 permissions:
   id-token: write # This is required for requesting the JWT
