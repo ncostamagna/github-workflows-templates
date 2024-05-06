@@ -21,7 +21,11 @@ jobs:
     environment:
       name: ${{ needs.prepare.outputs.branch }}
     steps:
+      - name: print
+        run: echo ${{ needs.prepare.outputs.branch }}
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Export secret as env
         if: ${{ env.secret != 'null' }}
         run: echo "$secret" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
