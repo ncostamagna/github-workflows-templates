@@ -1,0 +1,61 @@
+name: Deploy node apps with Serverless Framework
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: "Node version"
+        default: v20.12.1
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID: { required: true }
+      AWS_SECRET_ACCESS_KEY: { required: true }
+      DATABASE_URL: { required: false }
+      SENTRY_DSN: { required: false }
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: write  # This is required for actions/checkout
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ (startsWith(github.ref, 'refs/tags/') || github.ref_name == 'main') && 'prod' || (github.ref_name == 'qa' ) && 'qa' || 'qa' }}
+    steps:
+      - run: echo "Exposing branch"
+  serverless:
+    needs: prepare
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.prepare.outputs.branch }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: Install dependencies
+        run: npm install
+      - name: Export secret as env
+        if: ${{ env.secret != 'null' }}
+        run: echo "$secret" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+        env: 
+          secret: ${{ toJson(secrets) }}
+      - name: Export vars as env
+        if: ${{ env.var != 'null' }}
+        env:
+          var: ${{ toJson(vars) }}
+        run: echo "$var" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+      - name: Run build Node
+        run: npm ci && npm run build
+      - name: Serverless deploy
+        uses: serverless/github-action@v3.1.0
+        with:
+          args: -c "serverless deploy --verbose --stage ${{ needs.prepare.outputs.branch }}"
+          entrypoint: /bin/sh
