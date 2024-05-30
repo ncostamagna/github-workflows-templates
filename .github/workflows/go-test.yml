@@ -19,6 +19,10 @@ on:
         description: "Execute script lint"
         default: true
         type: boolean
+      type:
+        description: "project type, such as: 'pkg', 'app'"
+        default: app
+        type: string
 
 jobs:
   script-go-test:
@@ -33,10 +37,14 @@ jobs:
           go-version: ${{ inputs.go-version }}
       - name: Build
         run: go build -v ./...
-      - name: Test
+      - name: App Test
         id: run_test
-        if: ${{ inputs.test }}
+        if: ${{ inputs.test && inputs.type == 'app'}}
         run: go test ./internal/... ./pkg/... -covermode=atomic -coverpkg=./... -count=1 -race -v
+      - name: Pkg Test
+        id: run_test
+        if: ${{ inputs.test && inputs.type == 'pkg'}}
+        run: go test ./... -covermode=atomic -coverpkg=./... -count=1 -race -v
       - name: Linter
         if: ${{ inputs.lint }}
         uses: golangci/golangci-lint-action@v3
