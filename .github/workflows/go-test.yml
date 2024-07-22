@@ -23,10 +23,14 @@ on:
         description: "project type, such as: 'pkg', 'app'"
         default: app
         type: string
+      runner: 
+        description: "runner"
+        default: ubuntu-latest
+        type: string
 
 jobs:
   script-go-test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     steps:
       - uses: actions/checkout@v3
         with:
